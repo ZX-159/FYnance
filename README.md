@@ -507,12 +507,3 @@ Actions: `ping`, `check`, `history`, `balance_history`, `stats`, `monthly`,
   estimates, always labelled, never written to the archive.
 * The only network call is the card-authenticated balance query; history and
   settings live in the local SQLite file.
-
----
-
-### Additional notes
-
-* This project is not affiliated to Eschools or Foon Yew High School. 
-* This project is provided as-is, use at your own risk. 
-
----
