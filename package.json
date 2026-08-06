@@ -90,8 +90,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "YOUR_GITHUB_USERNAME",
-        "repo": "fynance",
+        "owner": "ZX-159",
+        "repo": "FYnance",
         "releaseType": "release"
       }
     ]
