@@ -512,7 +512,7 @@ Actions: `ping`, `check`, `history`, `balance_history`, `stats`, `monthly`,
 
 ### Additional notes
 
-*This project is not affiliated to Eschools or Foon Yew High School. 
-*This project is provided as-is, use at your own risk. 
+* This project is not affiliated to Eschools or Foon Yew High School. 
+* This project is provided as-is, use at your own risk. 
 
 ---
