@@ -1,6 +1,6 @@
 {
   "name": "fynance",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "FYnance — Foon Yew eSchool e-Wallet Dashboard",
   "main": "electron/main.js",
   "author": "ESchool Tools",
