@@ -810,7 +810,18 @@ input, select { font-family: inherit; }
 .data-row span:last-child { font-weight: 600; font-family: var(--mono); font-size: 11px; }
 
 /* ─────────────────────────── modals / toasts ─────────────────────────── */
-.modal-overlay, .modal-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(6,12,9,.57); backdrop-filter: blur(8px); animation: fade-in .2s var(--ease) both; }
+.modal-overlay, .modal-backdrop {
+  position: fixed !important;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(6, 12, 9, 0.57);
+  backdrop-filter: blur(8px);
+  animation: fade-in .2s var(--ease) both;
+  overflow: auto;
+}
 .modal { width: min(460px, 100%); padding: 20px; border: 1px solid var(--border); border-radius: 18px; color: var(--text); background: var(--surface-2); box-shadow: var(--shadow); animation: modal-in .3s var(--ease-spring) both; }
 .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin-bottom: 14px; }
 .modal-title { margin: 0; font-size: 19px; letter-spacing: -.04em; font-weight: 760; }
@@ -1338,12 +1349,16 @@ input, select { font-family: inherit; }
 
 /* ── full-screen destructive confirm ─────────────────────────────────── */
 .danger-overlay {
-  position: fixed; inset: 0; z-index: 400;
-  display: grid; place-items: center;
+  position: fixed !important;
+  z-index: 2000;
+  inset: 0;
+  display: grid;
+  place-items: center;
   padding: 24px;
   background: rgba(10, 8, 6, 0.72);
   backdrop-filter: blur(12px);
   animation: fade-in .25s var(--ease) both;
+  overflow: auto;
 }
 .danger-card {
   width: min(520px, calc(100vw - 48px));
