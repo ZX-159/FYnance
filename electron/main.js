@@ -43,6 +43,7 @@ const state = {
     active_profile: '',
     idle_mode: '0',
     max_history: '500',
+    update_mode: 'auto',
   },
 };
 
@@ -228,6 +229,7 @@ function registerIpc() {
     if (patch.card_id !== undefined) runSync(true);
     if (patch.idle_mode !== undefined) scheduleNext();
     if (patch.max_history !== undefined) trimHistory();
+    if (patch.update_mode !== undefined) applyUpdateMode();
     return state.settings;
   });
 
@@ -329,6 +331,7 @@ function registerIpc() {
       active_profile: '',
       idle_mode: '0',
       max_history: '500',
+      update_mode: 'auto',
     };
     scheduleNext();
     pushState({ ...state });
@@ -496,21 +499,39 @@ if (!gotLock) {
   app.on('second-instance', () => showWindow());
 
   // ── auto-update (packaged builds only) ──────────────────────────────────
+function compareVersions(a, b) {
+  const pa = String(a).replace(/^v/, '').split('.').map(Number);
+  const pb = String(b).replace(/^v/, '').split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
 let autoUpdater = null;
 function initAutoUpdater() {
   if (!app.isPackaged) return;
   try {
     ({ autoUpdater } = require('electron-updater'));
-    autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
-    autoUpdater.on('update-available', () => pushState({ update: { status: 'available' } }));
-    autoUpdater.on('update-not-available', () => pushState({ update: { status: 'none' } }));
-    autoUpdater.on('update-downloaded', () => pushState({ update: { status: 'downloaded' } }));
-    autoUpdater.on('error', (err) => pushState({ update: { status: 'error', error: err.message } }));
-    autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+    autoUpdater.on('update-available', (info) =>
+      pushState({ update: { status: 'available', current: app.getVersion(), latest: info.version } }));
+    autoUpdater.on('update-not-available', () =>
+      pushState({ update: { status: 'none', current: app.getVersion() } }));
+    autoUpdater.on('update-downloaded', () =>
+      pushState({ update: { status: 'downloaded', current: app.getVersion() } }));
+    autoUpdater.on('error', (err) =>
+      pushState({ update: { status: 'error', current: app.getVersion(), error: err.message } }));
   } catch (err) {
     console.error('[updater] init failed:', err.message);
   }
+}
+
+function applyUpdateMode() {
+  if (!autoUpdater) return;
+  autoUpdater.autoDownload = state.settings.update_mode !== 'manual';
 }
 
 ipcMain.handle('debug:info', async () => {
@@ -537,22 +558,54 @@ ipcMain.handle('debug:info', async () => {
   return info;
 });
 
+ipcMain.handle('app:info', () => ({
+  name: APP_NAME, version: app.getVersion(), packaged: app.isPackaged,
+}));
+
 ipcMain.handle('update:check', async () => {
-  if (!app.isPackaged || !autoUpdater) {
-    return { status: 'dev', message: 'Updates are only checked in packaged builds.' };
-  }
-  pushState({ update: { status: 'checking' } });
+  const current = app.getVersion();
+  if (!app.isPackaged || !autoUpdater) return { status: 'dev', current };
+  pushState({ update: { status: 'checking', current } });
   try {
+    const saved = autoUpdater.autoDownload;
+    autoUpdater.autoDownload = false;          // manual check never auto-downloads
     const result = await autoUpdater.checkForUpdates();
-    if (!result || !result.updateInfo) {
-      pushState({ update: { status: 'none' } });
-      return { status: 'none' };
+    autoUpdater.autoDownload = saved;
+    if (result && result.updateInfo) {
+      const latest = result.updateInfo.version;
+      const status = compareVersions(latest, current) > 0 ? 'available' : 'none';
+      pushState({ update: { status, current, latest } });
+      return { status, current, latest };
     }
-    return { status: 'available', version: result.updateInfo.version };
+    pushState({ update: { status: 'none', current } });
+    return { status: 'none', current };
   } catch (err) {
-    pushState({ update: { status: 'error', error: err.message } });
-    return { status: 'error', error: err.message };
+    pushState({ update: { status: 'error', current, error: err.message } });
+    return { status: 'error', current, error: err.message };
   }
+});
+
+ipcMain.handle('update:download', async () => {
+  if (!app.isPackaged || !autoUpdater) {
+    return { downloaded: false, error: 'Updates are only available in packaged builds.' };
+  }
+  try {
+    autoUpdater.autoDownload = true;
+    pushState({ update: { ...state.update, status: 'downloading' } });
+    await autoUpdater.downloadUpdate();
+    pushState({ update: { ...state.update, status: 'downloaded' } });
+    return { downloaded: true };
+  } catch (err) {
+    pushState({ update: { ...state.update, status: 'error', error: err.message } });
+    return { downloaded: false, error: err.message };
+  }
+});
+
+ipcMain.handle('update:install', () => {
+  if (autoUpdater) {
+    try { autoUpdater.quitAndInstall(); } catch { /* noop */ }
+  }
+  return { installing: true };
 });
 
 app.whenReady().then(async () => {
@@ -573,6 +626,10 @@ app.whenReady().then(async () => {
       await bridge.start(app);
       const { settings } = await bridge.request('settings_get');
       state.settings = { ...state.settings, ...settings };
+      applyUpdateMode();
+      if (autoUpdater && state.settings.update_mode !== 'manual') {
+        autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+      }
       pushState({ settings: state.settings });
       if ((state.settings.card_id || '').trim() && state.settings.sync_on_launch !== '0') {
         runSync(true);           // fetch immediately on launch (toggleable)

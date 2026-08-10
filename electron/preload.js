@@ -28,8 +28,11 @@ contextBridge.exposeInMainWorld('api', {
   // factory reset
   resetDb: () => ipcRenderer.invoke('db:reset'),
   resetOwnDb: () => ipcRenderer.invoke('db:reset-own'),
-  // updates
+  // updates & app info
+  getAppInfo: () => ipcRenderer.invoke('app:info'),
   checkForUpdates: () => ipcRenderer.invoke('update:check'),
+  downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
   // debug
   getDebugInfo: () => ipcRenderer.invoke('debug:info'),
   // backup & restore

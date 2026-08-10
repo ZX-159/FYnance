@@ -1335,3 +1335,49 @@ input, select { font-family: inherit; }
   box-shadow: 0 0 0 2px var(--err-bg);
   animation: pulse 2s ease-in-out infinite;
 }
+
+/* ── full-screen destructive confirm ─────────────────────────────────── */
+.danger-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  display: grid; place-items: center;
+  padding: 24px;
+  background: rgba(10, 8, 6, 0.72);
+  backdrop-filter: blur(12px);
+  animation: fade-in .25s var(--ease) both;
+}
+.danger-card {
+  width: min(520px, calc(100vw - 48px));
+  background: var(--surface-2);
+  border: 1px solid var(--err);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  padding: 38px 42px;
+  text-align: center;
+  animation: modal-in .35s var(--ease-spring) both;
+}
+.danger-card-icon {
+  width: 84px; height: 84px; margin: 0 auto 18px;
+  border-radius: 26px;
+  background: var(--err-bg); color: var(--err);
+  display: grid; place-items: center;
+  box-shadow: 0 0 0 8px var(--err-bg);
+}
+.danger-card-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+.danger-card-body {
+  margin: 12px auto 0; max-width: 400px;
+  font-size: 13px; color: var(--text-2); line-height: 1.65;
+}
+.danger-card-actions {
+  display: flex; justify-content: center; gap: 12px; margin-top: 28px;
+}
+.danger-confirm-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 26px; border-radius: 11px;
+  background: var(--err); color: #fff;
+  font-size: 13px; font-weight: 750;
+  box-shadow: 0 10px 26px var(--err-bg);
+  transition: transform .18s var(--ease-spring), filter .2s, box-shadow .2s;
+}
+.danger-confirm-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.08); box-shadow: 0 14px 32px var(--err-bg); }
+.danger-confirm-btn:active:not(:disabled) { transform: scale(.96); }
+.danger-confirm-btn:disabled { opacity: .6; cursor: default; }

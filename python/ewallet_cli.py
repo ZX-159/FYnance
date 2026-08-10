@@ -237,6 +237,7 @@ DEFAULT_SETTINGS = {
     "active_profile": "",
     "monthly_budget": "",
     "low_balance_threshold": "",
+    "update_mode": "auto",
 }
 
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useI18n, LANGUAGES } from '../lib/i18n';
 import { toast } from '../lib/toast';
 import ConfirmModal from './ConfirmModal';
+import DangerConfirm from './DangerConfirm';
 
 function fmtBytes(n) {
   if (!n) return '—';
@@ -84,7 +85,9 @@ export default function SettingsView({
   const [budget, setBudget] = useState('');
   const [lowBal, setLowBal] = useState('');
   const [showImport, setShowImport] = useState(false);
-  const [updState, setUpdState] = useState(null); // checking | available | none | error
+  const [updState, setUpdState] = useState(null); // checking | available | none | error | downloading | downloaded
+  const [appVersion, setAppVersion] = useState('');
+  const [updateMode, setUpdateMode] = useState('auto');
 
   const [interval, setIntervalV] = useState('60');
   const [theme, setTheme] = useState('system');
@@ -114,6 +117,7 @@ export default function SettingsView({
     setMinimizeTray(s.minimize_to_tray !== '0');
     setIdleMode(s.idle_mode === '1');
     setMaxHistory(s.max_history || '500');
+    setUpdateMode(s.update_mode || 'auto');
     if (active) {
       setCardStyle(active.card_style || s.card_style || 'flip-sage');
       setThemeFamily(active.theme_family || s.theme_family || 'sage');
@@ -172,6 +176,10 @@ export default function SettingsView({
     } catch (e) { toast(t('save_failed', { msg: e.message }), 'error'); }
   };
 
+  useEffect(() => {
+    window.api.getAppInfo().then((i) => setAppVersion(i.version || '')).catch(() => {});
+  }, []);
+
   const copyDebug = async () => {
     try {
       const info = await window.api.getDebugInfo();
@@ -199,12 +207,32 @@ export default function SettingsView({
       const res = await window.api.checkForUpdates();
       if (res.status === 'dev') { setUpdState(null); toast(t('updates_dev'), 'info'); }
       else if (res.status === 'none') { setUpdState('none'); toast(t('updates_none'), 'ok'); }
-      else if (res.status === 'available') { setUpdState('available'); toast(t('updates_available', { v: res.version }), 'info'); }
-      else { setUpdState('error'); toast(res.error || t('updates_error'), 'error'); }
+      else if (res.status === 'available') {
+        setUpdState({ status: 'available', current: res.current, latest: res.latest });
+        toast(t('updates_available', { v: res.latest }), 'info');
+      }
+      else { setUpdState({ status: 'error', error: res.error }); toast(res.error || t('updates_error'), 'error'); }
     } catch (e) {
-      setUpdState('error');
+      setUpdState({ status: 'error', error: e.message });
       toast(e.message || t('updates_error'), 'error');
     }
+  };
+
+  const downloadUpdate = async () => {
+    setUpdState({ ...updState, status: 'downloading' });
+    try {
+      const res = await window.api.downloadUpdate();
+      if (res.downloaded) setUpdState({ ...updState, status: 'downloaded' });
+      else { setUpdState({ ...updState, status: 'error', error: res.error }); toast(res.error || t('updates_error'), 'error'); }
+    } catch (e) {
+      setUpdState({ ...updState, status: 'error', error: e.message });
+    }
+  };
+
+  const changeUpdateMode = async (mode) => {
+    setUpdateMode(mode);
+    try { await onSave({ update_mode: mode }); toast(t('settings_saved'), 'ok'); }
+    catch (e) { toast(t('save_failed', { msg: e.message }), 'error'); }
   };
 
   const confirmDelete = async () => {
@@ -540,19 +568,58 @@ export default function SettingsView({
             <PanelHead kicker={t('on_this_device')} title={t('about_updates')} />
             <div className="setting-row">
               <div>
-                <strong>FYnance v1.8.0</strong>
+                <strong>{t('current_version')}</strong>
+                <small>FYnance v{appVersion || '?'}{!appState.settings || null}</small>
+              </div>
+              <div className="setting-control"><span>v{appVersion || '—'}</span></div>
+            </div>
+            <div className="setting-row">
+              <div>
+                <strong>{t('update_mode')}</strong>
                 <small>{t('updates_hint')}</small>
               </div>
               <div className="setting-control">
-                <button className="secondary-button btn-sm" onClick={checkUpdate} disabled={updState === 'checking'}>
-                  <svg className={updState === 'checking' ? 'spin' : ''} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
-                  {updState === 'checking' ? t('checking_updates') : t('check_updates')}
+                <select value={updateMode} onChange={(e) => changeUpdateMode(e.target.value)}>
+                  <option value="auto">{t('update_auto')}</option>
+                  <option value="manual">{t('update_manual')}</option>
+                </select>
+              </div>
+            </div>
+            <div className="setting-row">
+              <div>
+                <strong>{t('latest_available')}</strong>
+                <small>
+                  {updState === null && t('updates_hint_short')}
+                  {updState && updState.latest && t('version_x', { v: updState.latest })}
+                  {updState && updState.status === 'none' && t('updates_none')}
+                  {updState && updState.status === 'downloaded' && t('updates_available_ready')}
+                  {updState && updState.status === 'downloading' && t('downloading')}
+                </small>
+              </div>
+              <div className="setting-control">
+                <button className="secondary-button btn-sm" onClick={checkUpdate} disabled={updState && updState.status === 'checking'}>
+                  <svg className={updState && updState.status === 'checking' ? 'spin' : ''} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
+                  {updState && updState.status === 'checking' ? t('checking_updates') : t('check_updates')}
                 </button>
               </div>
             </div>
-            {updState === 'available' && <p className="field-hint" style={{ color: 'var(--accent)' }}>{t('updates_available_ready')}</p>}
-            {updState === 'none' && <p className="field-hint" style={{ color: 'var(--ok)' }}>{t('updates_none')}</p>}
-            {updState === 'error' && <p className="field-hint" style={{ color: 'var(--err)' }}>{t('updates_error')}</p>}
+            {updState && updState.status === 'available' && (
+              <div className="settings-actions">
+                <button className="primary-button btn-sm" onClick={downloadUpdate}>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" /></svg>
+                  {t('download_install')}
+                </button>
+              </div>
+            )}
+            {updState && updState.status === 'downloaded' && (
+              <div className="settings-actions">
+                <button className="primary-button btn-sm" onClick={() => window.api.installUpdate()}>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></svg>
+                  {t('install_now')}
+                </button>
+              </div>
+            )}
+            {updState && updState.status === 'error' && <p className="field-hint" style={{ color: 'var(--err)' }}>{updState.error || t('updates_error')}</p>}
             <div className="settings-actions">
               <button className="secondary-button btn-sm" onClick={copyDebug}>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
@@ -593,22 +660,21 @@ export default function SettingsView({
         </div>
       </section>
 
-      <ConfirmModal
+      <DangerConfirm
         open={deleteId !== null}
         title={t('delete_account')}
         body={t('confirm_delete_account_data')}
         confirmLabel={t('delete')}
-        cancelLabel={t('cancel')}
         busy={resetting}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteId(null)}
       />
-      <ConfirmModal
+      <DangerConfirm
         open={showResetOwn}
         title={t('reset_own_confirm_title')}
         body={t('reset_own_confirm_body')}
         confirmLabel={t('reset')}
-        cancelLabel={t('cancel')}
+        icon="reset"
         busy={resetting}
         onConfirm={confirmResetOwn}
         onCancel={() => setShowResetOwn(false)}
@@ -623,12 +689,12 @@ export default function SettingsView({
         onCancel={() => setShowImport(false)}
       />
 
-      <ConfirmModal
+      <DangerConfirm
         open={showReset}
         title={t('reset_confirm_title')}
         body={t('reset_confirm_body')}
-        confirmLabel={t('reset')}
-        cancelLabel={t('cancel')}
+        confirmLabel={t('reset_all')}
+        icon="reset"
         busy={resetting}
         onConfirm={confirmReset}
         onCancel={() => setShowReset(false)}
