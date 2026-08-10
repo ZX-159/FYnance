@@ -1,8 +1,9 @@
 // components/DangerConfirm.jsx — FULL-SCREEN destructive confirmation.
-// Covers the whole app (dark blur backdrop) so the user never has to
-// scroll back up; the confirm button is solid red.
+// Rendered via a PORTAL into document.body, so it always covers the whole
+// app window regardless of which view is scrolled where. Solid red button.
 
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useI18n } from '../lib/i18n';
 
 export default function DangerConfirm({
@@ -35,7 +36,7 @@ export default function DangerConfirm({
     </svg>
   );
 
-  return (
+  return createPortal(
     <div
       className="danger-overlay"
       onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel(); }}
@@ -56,6 +57,7 @@ export default function DangerConfirm({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
