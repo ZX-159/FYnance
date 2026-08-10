@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useI18n } from '../lib/i18n';
 
 /**
@@ -23,7 +24,7 @@ export default function ConfirmModal({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel(); }}>
       <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
         <div className="modal-icon danger">
@@ -41,6 +42,7 @@ export default function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
