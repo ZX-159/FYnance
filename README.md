@@ -8,9 +8,7 @@ distinctive **Noir & Teal** design system (near-black surfaces, deep navy +
 teal accents). Ships as a single native installer with **zero Python or
 external dependencies** for the end user.
 
-> Data source: `POST https://foonyew.eschool.edu.my/newui/ewallet/chkbal.php`
-> with `idcard=<base64(card_id)>` — reverse-engineered and verified live
-> (card `0002329052`). The school server only accepts Malaysian/local IPs.
+>The school server only accepts Malaysian/local IPs.
 
 ---
 
