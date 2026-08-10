@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version to release (e.g. 1.8.1)'
         required: true
-        default: '1.8.1'
+        default: '1.1.1'
       notes:
         description: 'Release notes (optional)'
         required: false
