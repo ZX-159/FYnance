@@ -92,9 +92,11 @@
       ],
       "category": "Finance",
       "icon": "assets/icon.png",
-      "maintainer": "ZX-159",
+      "maintainer": "ESchool Tools",
       "synopsis": "FYnance — Foon Yew e-wallet dashboard",
-      "description": "Automated balance & spending tracker for the Foon Yew eschool e-wallet."
+      "description": "Automated balance & spending tracker for the Foon Yew eschool e-wallet.",
+      "desktopName": "FYnance",
+      "syncDesktopName": true
     },
     "publish": [
       {
