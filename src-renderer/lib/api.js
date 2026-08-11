@@ -22,6 +22,7 @@ export const api = bridge || {
   checkForUpdates: async () => ({ status: 'none', current: '0.0.0' }),
   downloadUpdate: async () => ({ downloaded: false }),
   installUpdate: async () => ({}),
+  openReleasePage: async () => ({}),
   getDebugInfo: async () => ({}),
   exportBackup: async () => ({ saved: false }),
   importBackup: async () => ({ imported: false }),

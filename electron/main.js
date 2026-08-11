@@ -12,7 +12,12 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
 const { PythonBridge } = require('./python-bridge');
+
+// GitHub release channel — overridable via env at build time
+const GITHUB_REPO = process.env.FYNANCE_GITHUB_REPO || 'ZX-159/FYnance';
+const GITHUB_API_LATEST = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 
 const APP_NAME = 'FYnance';
 const DEFAULT_INTERVAL_MIN = 60;
@@ -499,6 +504,33 @@ if (!gotLock) {
   app.on('second-instance', () => showWindow());
 
   // ── auto-update (packaged builds only) ──────────────────────────────────
+function normalizeVersion(v) {
+  return String(v || '').replace(/^v/i, '').trim() || null;
+}
+
+function fetchLatestRelease() {
+  return new Promise((resolve, reject) => {
+    const req = https.get(GITHUB_API_LATEST, {
+      headers: { 'User-Agent': 'FYnance-Updater/1.0', 'Accept': 'application/vnd.github+json' },
+    }, (res) => {
+      let body = '';
+      res.on('data', (c) => { body += c; if (body.length > 2e6) req.destroy(); });
+      res.on('end', () => {
+        try {
+          const j = JSON.parse(body);
+          if (res.statusCode === 200 && j && j.tag_name) {
+            resolve({ tag: j.tag_name, html_url: j.html_url });
+          } else {
+            reject(new Error((j && j.message) || `GitHub API ${res.statusCode}`));
+          }
+        } catch (e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(15000, () => req.destroy(new Error('timeout')));
+  });
+}
+
 function compareVersions(a, b) {
   const pa = String(a).replace(/^v/, '').split('.').map(Number);
   const pb = String(b).replace(/^v/, '').split('.').map(Number);
@@ -558,31 +590,44 @@ ipcMain.handle('debug:info', async () => {
   return info;
 });
 
+async function robustCheck() {
+  const current = app.getVersion();
+  let feedLatest = null, feedError = null;
+  if (autoUpdater) {
+    try {
+      const saved = autoUpdater.autoDownload;
+      autoUpdater.autoDownload = false;
+      const r = await autoUpdater.checkForUpdates();
+      autoUpdater.autoDownload = saved;
+      feedLatest = r && r.updateInfo ? normalizeVersion(r.updateInfo.version) : null;
+    } catch (e) { feedError = e.message; }
+  }
+  let apiLatest = null, apiError = null;
+  try {
+    const rel = await fetchLatestRelease();
+    apiLatest = normalizeVersion(rel.tag);
+  } catch (e) { apiError = e.message; }
+
+  const latest = apiLatest || feedLatest;
+  if (!latest) {
+    return { status: 'error', current, error: feedError || apiError || 'No release info found' };
+  }
+  const status = compareVersions(latest, current) > 0 ? 'available' : 'none';
+  return { status, current, latest, source: apiLatest ? (feedLatest ? 'both' : 'github-api') : 'updater', feedError };
+}
+
 ipcMain.handle('app:info', () => ({
   name: APP_NAME, version: app.getVersion(), packaged: app.isPackaged,
+  githubRepo: GITHUB_REPO,
 }));
 
 ipcMain.handle('update:check', async () => {
   const current = app.getVersion();
-  if (!app.isPackaged || !autoUpdater) return { status: 'dev', current };
+  if (!app.isPackaged) return { status: 'dev', current };
   pushState({ update: { status: 'checking', current } });
-  try {
-    const saved = autoUpdater.autoDownload;
-    autoUpdater.autoDownload = false;          // manual check never auto-downloads
-    const result = await autoUpdater.checkForUpdates();
-    autoUpdater.autoDownload = saved;
-    if (result && result.updateInfo) {
-      const latest = result.updateInfo.version;
-      const status = compareVersions(latest, current) > 0 ? 'available' : 'none';
-      pushState({ update: { status, current, latest } });
-      return { status, current, latest };
-    }
-    pushState({ update: { status: 'none', current } });
-    return { status: 'none', current };
-  } catch (err) {
-    pushState({ update: { status: 'error', current, error: err.message } });
-    return { status: 'error', current, error: err.message };
-  }
+  const res = await robustCheck();
+  pushState({ update: { ...res } });
+  return res;
 });
 
 ipcMain.handle('update:download', async () => {
@@ -608,6 +653,11 @@ ipcMain.handle('update:install', () => {
   return { installing: true };
 });
 
+ipcMain.handle('update:open-release', () => {
+  shell.openExternal(`https://github.com/${GITHUB_REPO}/releases/latest`);
+  return { opened: true };
+});
+
 app.whenReady().then(async () => {
     app.setName(APP_NAME);
     initAutoUpdater();
@@ -627,8 +677,17 @@ app.whenReady().then(async () => {
       const { settings } = await bridge.request('settings_get');
       state.settings = { ...state.settings, ...settings };
       applyUpdateMode();
-      if (autoUpdater && state.settings.update_mode !== 'manual') {
-        autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+      if (state.settings.update_mode !== 'manual') {
+        robustCheck().then(async (res) => {
+          pushState({ update: { ...res } });
+          if (res.status === 'available' && autoUpdater && !res.feedError) {
+            try {
+              autoUpdater.autoDownload = true;
+              await autoUpdater.downloadUpdate();
+              pushState({ update: { ...res, status: 'downloaded' } });
+            } catch (e) { console.error('[updater] auto-download failed:', e.message); }
+          }
+        }).catch((e) => console.error('[updater] boot check failed:', e.message));
       }
       pushState({ settings: state.settings });
       if ((state.settings.card_id || '').trim() && state.settings.sync_on_launch !== '0') {

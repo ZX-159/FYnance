@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('api', {
   checkForUpdates: () => ipcRenderer.invoke('update:check'),
   downloadUpdate: () => ipcRenderer.invoke('update:download'),
   installUpdate: () => ipcRenderer.invoke('update:install'),
+  openReleasePage: () => ipcRenderer.invoke('update:open-release'),
   // debug
   getDebugInfo: () => ipcRenderer.invoke('debug:info'),
   // backup & restore

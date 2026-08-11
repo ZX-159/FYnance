@@ -645,23 +645,31 @@ input, select { font-family: inherit; }
 
 /* ─────────────────────────── settings ─────────────────────────── */
 .settings-page { display: flex; flex-direction: column; gap: 13px; max-width: 1000px; }
-.settings-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
-.settings-column { display: flex; flex-direction: column; gap: 13px; }
-.settings-card { padding: 16px; }
+.settings-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; align-items: start; }
+.settings-column { display: flex; flex-direction: column; gap: 13px; min-width: 0; }
+.settings-card { padding: 16px; min-width: 0; overflow: hidden; }
 .settings-card .panel-heading { margin-bottom: 10px; }
 .set-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .set-section-icon { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 15px; }
 .set-section-title { font-size: 14px; font-weight: 740; letter-spacing: -.01em; }
 .set-section-hint { font-size: 10px; color: var(--text-3); margin-top: 1px; }
 
-.setting-row { display: flex; min-height: 54px; align-items: center; justify-content: space-between; gap: 15px; border-top: 1px solid var(--border); }
-.setting-row > div:first-child { display: flex; flex-direction: column; }
-.setting-row strong { font-size: 12px; }
-.setting-row small { margin-top: 3px; color: var(--text-3); font-size: 10px; }
-.setting-control { display: flex; align-items: center; gap: 7px; color: var(--text-2); }
-.setting-control > span { font-size: 11px; }
-.setting-control select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface-2); font-size: 11px; outline: none; }
+.setting-row {
+  display: flex; min-height: 54px; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 0; border-top: 1px solid var(--border);
+}
+.setting-row > div:first-child { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.setting-row strong { font-size: 12px; color: var(--text); }
+.setting-row small { margin-top: 3px; color: var(--text-3); font-size: 10px; line-height: 1.45; overflow-wrap: break-word; }
+.setting-control { display: flex; align-items: center; gap: 7px; color: var(--text-2); flex-shrink: 0; }
+.setting-control > span { font-size: 11px; white-space: nowrap; }
+.setting-control select {
+  max-width: 190px; min-width: 0;
+  padding: 7px 9px; border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); background: var(--surface-2); font-size: 11px; outline: none;
+}
 .setting-control select:focus { border-color: var(--accent); }
+.setting-control .btn-sm { flex-shrink: 0; }
 
 /* ── star/cloud theme & behaviour toggle (slider) ─────────────────────── */
 .switch {
@@ -764,15 +772,27 @@ input, select { font-family: inherit; }
 .storage-stats span { color: var(--text-3); font-size: 9px; }
 .storage-stats strong { margin-top: 3px; font-size: 12px; }
 
-.danger-card { display: flex; align-items: center; justify-content: space-between; gap: 15px; border-color: var(--err-bg); }
-.danger-card > div:first-child { display: flex; flex-direction: column; }
-.danger-card .danger-kicker { color: var(--err); font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
-.danger-card strong { margin-top: 5px; font-size: 13px; }
-.danger-card p { margin: 4px 0 0; color: var(--text-3); font-size: 10px; }
-.danger-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn-danger { display: inline-flex; height: 32px; align-items: center; gap: 6px; padding: 0 11px; border: 1px solid var(--err); border-radius: 8px; color: var(--err); background: transparent; font-size: 11px; font-weight: 650; transition: .18s; }
-.btn-danger:hover { color: #fff; background: var(--err); }
-.danger-ghost { color: var(--err); border-color: var(--err-bg); }
+.danger-card { border-color: var(--err-bg); display: flex; flex-direction: column; gap: 12px; }
+.danger-card .danger-kicker {
+  color: var(--err); font-family: var(--mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: .1em; font-weight: 700;
+}
+.danger-card strong { margin-top: 5px; font-size: 13px; color: var(--text); }
+.danger-card p { margin: 4px 0 0; color: var(--text-3); font-size: 11px; line-height: 1.5; }
+.danger-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn-danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 34px; padding: 0 14px;
+  border: 1px solid var(--err); border-radius: 9px;
+  color: #fff; background: var(--err);
+  font-size: 11.5px; font-weight: 700; white-space: nowrap;
+  box-shadow: 0 6px 16px var(--err-bg);
+  transition: .18s;
+}
+.btn-danger:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 8px 20px var(--err-bg); }
+.btn-danger:active { transform: scale(.97); }
+.danger-ghost { color: var(--err); background: var(--err-bg); border-color: transparent; box-shadow: none; }
+.danger-ghost:hover { color: #fff; background: var(--err); filter: none; }
 
 /* accounts (settings + wizard reuse) */
 .acct-item { display: flex; align-items: center; gap: 12px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 12px; background: transparent; transition: .18s; margin-top: 8px; }
@@ -1360,30 +1380,38 @@ input, select { font-family: inherit; }
   animation: fade-in .25s var(--ease) both;
   overflow: auto;
 }
-.danger-card {
-  width: min(520px, calc(100vw - 48px));
+.danger-modal {
+  width: min(460px, calc(100vw - 40px));
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
   background: var(--surface-2);
   border: 1px solid var(--err);
-  border-radius: 24px;
+  border-radius: 22px;
   box-shadow: var(--shadow-lg);
-  padding: 38px 42px;
+  padding: 30px 32px;
   text-align: center;
   animation: modal-in .35s var(--ease-spring) both;
 }
-.danger-card-icon {
-  width: 84px; height: 84px; margin: 0 auto 18px;
-  border-radius: 26px;
+.danger-modal-icon {
+  width: 72px; height: 72px; margin: 0 auto 16px;
+  border-radius: 22px;
   background: var(--err-bg); color: var(--err);
   display: grid; place-items: center;
-  box-shadow: 0 0 0 8px var(--err-bg);
+  box-shadow: 0 0 0 7px var(--err-bg);
 }
-.danger-card-title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
-.danger-card-body {
-  margin: 12px auto 0; max-width: 400px;
-  font-size: 13px; color: var(--text-2); line-height: 1.65;
+.danger-modal-title { font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+.danger-modal-body {
+  margin: 10px auto 0; max-width: 380px;
+  font-size: 13px; color: var(--text-2); line-height: 1.6;
 }
-.danger-card-actions {
-  display: flex; justify-content: center; gap: 12px; margin-top: 28px;
+.danger-modal-actions {
+  display: flex; justify-content: center; gap: 10px; margin-top: 24px;
+  flex-wrap: wrap;
+}
+@media (max-width: 520px) {
+  .danger-modal { padding: 24px 20px; }
+  .danger-modal-actions { flex-direction: column-reverse; }
+  .danger-modal-actions > button { width: 100%; }
 }
 .danger-confirm-btn {
   display: inline-flex; align-items: center; gap: 8px;

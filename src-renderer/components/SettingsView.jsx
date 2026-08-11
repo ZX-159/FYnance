@@ -590,10 +590,11 @@ export default function SettingsView({
                 <strong>{t('latest_available')}</strong>
                 <small>
                   {updState === null && t('updates_hint_short')}
-                  {updState && updState.latest && t('version_x', { v: updState.latest })}
+                  {updState && updState.latest && t('latest_is', { v: updState.latest })}
                   {updState && updState.status === 'none' && t('updates_none')}
                   {updState && updState.status === 'downloaded' && t('updates_available_ready')}
                   {updState && updState.status === 'downloading' && t('downloading')}
+                  {updState && updState.status === 'available' && t('update_found', { cur: updState.current, latest: updState.latest })}
                 </small>
               </div>
               <div className="setting-control">
@@ -620,7 +621,14 @@ export default function SettingsView({
               </div>
             )}
             {updState && updState.status === 'error' && <p className="field-hint" style={{ color: 'var(--err)' }}>{updState.error || t('updates_error')}</p>}
+            {updState && updState.feedError && (
+              <p className="field-hint" style={{ color: 'var(--warn)' }}>{t('updates_feed_note', { msg: updState.feedError })}</p>
+            )}
             <div className="settings-actions">
+              <button className="secondary-button btn-sm" onClick={() => window.api.openReleasePage()}>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><path d="M15 3h6v6" /><path d="M10 14 21 3" /></svg>
+                {t('open_releases')}
+              </button>
               <button className="secondary-button btn-sm" onClick={copyDebug}>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                 {t('copy_debug_info')}
@@ -650,11 +658,11 @@ export default function SettingsView({
               <p>{t('reset_own_hint')}</p>
             </div>
             <div className="danger-actions">
-              <button onClick={() => setShowResetOwn(true)}>
+              <button className="btn-danger" onClick={() => setShowResetOwn(true)}>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /></svg>
                 {t('reset_own')}
               </button>
-              <button onClick={() => setShowReset(true)}>{t('reset_all')}</button>
+              <button className="btn-ghost btn-sm danger-ghost" onClick={() => setShowReset(true)}>{t('reset_all')}</button>
             </div>
           </article>
         </div>

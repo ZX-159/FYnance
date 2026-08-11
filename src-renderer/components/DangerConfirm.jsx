@@ -44,11 +44,11 @@ export default function DangerConfirm({
       aria-modal="true"
       aria-label={title}
     >
-      <div className="danger-card">
-        <div className="danger-card-icon">{IconSvg}</div>
-        <div className="danger-card-title">{title}</div>
-        <p className="danger-card-body">{body}</p>
-        <div className="danger-card-actions">
+      <div className="danger-modal">
+        <div className="danger-modal-icon">{IconSvg}</div>
+        <div className="danger-modal-title">{title}</div>
+        <p className="danger-modal-body">{body}</p>
+        <div className="danger-modal-actions">
           <button className="secondary-button" onClick={onCancel} disabled={busy}>
             {cancelLabel || t('cancel')}
           </button>
