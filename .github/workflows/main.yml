@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g. 1.8.1)'
+        description: 'Version to release (e.g. 1.1.1)'
         required: true
         default: '1.1.1'
       notes:
@@ -21,15 +21,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Bump package.json version
+      - name: Bump version (package.json + lockfile stay in sync)
         run: |
-          node -e "const p=require('./package.json'); p.version='${{ inputs.version }}'; require('fs').writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');"
+          node -e "
+          const fs=require('fs');
+          const v='${{ inputs.version }}';
+          for (const f of ['package.json','package-lock.json']) {
+            try { const p=JSON.parse(fs.readFileSync(f)); p.version=v; fs.writeFileSync(f, JSON.stringify(p,null,2)+'\n'); }
+            catch(e){ console.log('skip', f, e.message); }
+          }
+          "
 
       - name: Commit + tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json 2>/dev/null || git add package.json
+          git add package.json package-lock.json
           git commit -m "v${{ inputs.version }}" || echo "nothing to commit"
           git push
           git tag "v${{ inputs.version }}" || true
@@ -45,6 +52,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: v${{ inputs.version }}
 
       - uses: actions/setup-node@v4
         with:
@@ -53,6 +62,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install Linux packaging deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm flatpak flatpak-builder libfuse2
+          flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo || true
 
       - name: Install deps
         run: npm install
@@ -64,15 +80,20 @@ jobs:
         if: runner.os == 'Windows'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
         run: npx electron-builder --win --publish always
 
       - name: Package (macOS)
         if: runner.os == 'macOS'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: npx electron-builder --mac --publish always
-        continue-on-error: true
 
       - name: Package (Linux)
         if: runner.os == 'Linux'
@@ -88,5 +109,7 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.AppImage
+            release/*.rpm
+            release/*.flatpak
             release/latest*.yml
           if-no-files-found: ignore
