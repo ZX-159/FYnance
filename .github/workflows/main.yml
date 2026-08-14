@@ -32,14 +32,14 @@ jobs:
           }
           "
 
-      - name: Commit and push version bump
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "v${{ inputs.version }}"
-          file_pattern: package.json package-lock.json
-
-      - name: Create Git Tag
+      - name: Commit, Push and Tag
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull origin main --rebase || true
+          git add package.json package-lock.json
+          git commit -m "v${{ inputs.version }}" || echo "nothing to commit"
+          git push origin main
           git tag -f "v${{ inputs.version }}"
           git push origin "v${{ inputs.version }}" --force || true
 
