@@ -77,7 +77,8 @@
         "dmg"
       ],
       "category": "public.app-category.finance",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.png",
+      "sign": false
     },
     "linux": {
       "target": [
