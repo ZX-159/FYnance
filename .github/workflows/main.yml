@@ -71,8 +71,8 @@ jobs:
           sudo apt-get install -y rpm flatpak flatpak-builder libfuse2
           flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo || true
 
-      - name: Install deps
-        run: npm install
+      - name: Install deps (Clean Install via lockfile)
+        run: npm ci
 
       - name: Build renderer + Python binary
         run: npm run build
@@ -89,11 +89,6 @@ jobs:
         if: runner.os == 'macOS'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: npx electron-builder --mac --publish always
 
       - name: Package (Linux)
