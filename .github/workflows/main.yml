@@ -1,4 +1,4 @@
-name: Release 
+name: Release
 
 on:
   workflow_dispatch:
@@ -99,19 +99,7 @@ jobs:
         if: runner.os == 'Linux'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          npx electron-builder --linux AppImage --publish always
-          if command -v flatpak >/dev/null 2>&1; then
-            npx electron-builder --linux flatpak --publish always || echo "flatpak build failed (skipped)"
-          else
-            echo "flatpak not available — skipping flatpak target"
-          fi
-          if command -v rpmbuild >/dev/null 2>&1 || command -v rpm >/dev/null 2>&1; then
-            npx electron-builder --linux rpm --publish always || echo "rpm build failed (skipped)"
-          else
-            echo "rpm not available — skipping rpm target"
-          fi
+        run: npx electron-builder --linux --publish always
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
