@@ -47,7 +47,13 @@ jobs:
     needs: bump-and-release
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            publish_flag: --publish always
+          - os: macos-latest
+            publish_flag: --publish always
+          - os: ubuntu-latest
+            publish_flag: --publish always
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -89,14 +95,13 @@ jobs:
         if: runner.os == 'macOS'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: npx electron-builder --mac --publish always -c.forceCodeSigning=false
+        run: npx electron-builder --mac --publish onTagOrDraft
 
       - name: Package (Linux)
         if: runner.os == 'Linux'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --linux --publish always
+        run: npx electron-builder --linux --publish onTagOrDraft
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
