@@ -1,11 +1,11 @@
 {
   "name": "fynance",
-  "version": "1.2.1",
+  "version": "1.0.0",
   "description": "FYnance — Foon Yew eSchool e-Wallet Dashboard",
   "main": "electron/main.js",
-  "author": "ZX-159",
+  "author": "ESchool Tools",
   "license": "MIT",
-  "private": false,
+  "private": true,
   "scripts": {
     "build:renderer": "vite build",
     "build:python": "node scripts/build-python.js",
@@ -94,9 +94,7 @@
       "icon": "assets/icon.png",
       "maintainer": "ESchool Tools",
       "synopsis": "FYnance — Foon Yew e-wallet dashboard",
-      "description": "Automated balance & spending tracker for the Foon Yew eschool e-wallet.",
-      "desktopName": "FYnance",
-      "syncDesktopName": true
+      "description": "Automated balance & spending tracker for the Foon Yew eschool e-wallet."
     },
     "publish": [
       {
