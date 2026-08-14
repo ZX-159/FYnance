@@ -77,12 +77,7 @@
         "dmg"
       ],
       "category": "public.app-category.finance",
-      "icon": "assets/icon.png",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
-      "notarize": true
+      "icon": "assets/icon.png"
     },
     "linux": {
       "target": [
