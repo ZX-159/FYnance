@@ -78,7 +78,8 @@
       ],
       "category": "public.app-category.finance",
       "icon": "assets/icon.png",
-      "sign": false
+      "sign": false,
+      "identity": null
     },
     "linux": {
       "target": [
